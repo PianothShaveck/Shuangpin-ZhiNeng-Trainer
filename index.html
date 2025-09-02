@@ -61,7 +61,7 @@
   @keyframes badflash{from{box-shadow:0 0 0 0 rgba(255,90,115,.7)}to{box-shadow:0 0 26px 6px rgba(255,90,115,0)}}
   .sp-labels{display:none;margin-top:4px}
   .keyboard.show-codes .sp-labels{display:block}
-  .sp-line{font-size:10px;line-height:1.2;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sp-line{font-size:10px;line-height:1.2;opacity:.95;}
   .sp-line .tag{padding:1px 4px;margin-right:3px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);font-weight:800}
   .sp-line .t-init{color:var(--initColor);border-color:rgba(134,247,185,.45);background:rgba(134,247,185,.12)}
   .sp-line .t-fin{color:var(--finColor);border-color:rgba(207,168,255,.45);background:rgba(207,168,255,.12)}
@@ -87,7 +87,6 @@
     </div>
     <div class="controls">
       <button class="btn-accent" id="btnAddAuto">+ Add key</button>
-      <button id="btnChoose">Pick key…</button>
       <div class="chip select-chip" id="filterWrap"><span id="filterLabel">Filter</span>: <select id="filterSelect"><option value="all">All combinations</option><option value="valid">Only valid/common syllables</option></select></div>
       <button class="btn-ghost" id="btnResetSession">Mark all combos as due</button>
       <button class="btn-danger" id="btnHardReset">Full reset</button>
@@ -98,7 +97,7 @@
     <section class="trainer pane" aria-live="polite">
       <div class="target-card" id="targetCard">
         <div class="pinyin-main" id="pinyinText">fan</div>
-        <div class="code-strip">
+        <div class="code-strip" id="codeStrip">
           <span class="code-key expected" id="codeK1">f</span>
           <span class="code-key" id="codeK2">j</span>
           <span class="code-hints" id="codeHints">= <span class="hint-init" id="hintInit">f</span> + <span class="hint-fin" id="hintFin">an</span></span>
@@ -214,6 +213,7 @@
   const hintInit=document.getElementById('hintInit');
   const hintFin=document.getElementById('hintFin');
   const codeHints=document.getElementById('codeHints');
+  const codeStrip=document.getElementById('codeStrip');
   const progressFill=document.getElementById('progressFill');
   const dueCountEl=document.getElementById('dueCount');
   const poolCountEl=document.getElementById('poolCount');
@@ -225,7 +225,6 @@
   const keyboardEl=document.getElementById('keyboard');
   const targetCard=document.getElementById('targetCard');
   const btnAddAuto=document.getElementById('btnAddAuto');
-  const btnChoose=document.getElementById('btnChoose');
   const btnAddSuggest=document.getElementById('btnAddSuggest');
   const btnResetSession=document.getElementById('btnResetSession');
   const btnHardReset=document.getElementById('btnHardReset');
@@ -243,7 +242,6 @@
   document.getElementById('title').textContent=t('title');
   document.getElementById('tagline').textContent=t('tagline');
   btnAddAuto.textContent=t('btnAddAuto');
-  btnChoose.textContent=t('btnChoose');
   btnResetSession.textContent=t('btnResetSession');
   btnHardReset.textContent=t('btnHardReset');
   document.getElementById('hint').textContent=t('hint');
@@ -284,11 +282,10 @@
   document.addEventListener('keydown',handleKeydown);
   btnAddAuto.addEventListener('click',()=>{addSuggestedKey()});
   btnAddSuggest.addEventListener('click',()=>{addSuggestedKey()});
-  btnChoose.addEventListener('click',()=>{flashToast(t('chooseKeyHintToast'),1400);highlightPickerOnce()});
   btnResetSession.addEventListener('click',()=>{const now=Date.now();for(const it of itemPool){ensureSRS(it.id);state.srs[it.id].dueAt=now}saveState();renderProgress();flashToast(t('toastAllDue'),1400)});
   btnHardReset.addEventListener('click',()=>{if(!confirm('OK?'))return;localStorage.removeItem(STORAGE_KEY);state=clone(DEFAULT_STATE);rebuildPool();pickNextItem(true);renderAll();flashToast(t('toastReset'),1600)});
   toggleKeyLabels.checked=state.showKeyLabels;toggleKeyLabels.addEventListener('change',()=>{state.showKeyLabels=toggleKeyLabels.checked;saveState();renderKeyboard()});
-  toggleCodeHints.checked=state.showCodeHints;toggleCodeHints.addEventListener('change',()=>{state.showCodeHints=toggleCodeHints.checked;codeHints.style.display=state.showCodeHints?'':'none';saveState()});
+  toggleCodeHints.checked=state.showCodeHints;toggleCodeHints.addEventListener('change',()=>{state.showCodeHints=toggleCodeHints.checked;codeStrip.style.display=state.showCodeHints?'flex':'none';saveState()});
   soundToggle.checked=state.sound;soundToggle.addEventListener('change',()=>{state.sound=soundToggle.checked;saveState()});
   skipUnknownToggle.checked=state.skipUnknown;skipUnknownToggle.addEventListener('change',()=>{state.skipUnknown=skipUnknownToggle.checked;saveState()});
   filterSelect.value=state.validOnly?'valid':'all';
@@ -403,7 +400,7 @@
     codeK1.className='code-key expected';codeK2.className='code-key';
     hintInit.textContent=displayInitial(current.initialKey,current.initialCode);
     hintFin.textContent=current.finalCode;
-    codeHints.style.display=state.showCodeHints?'':'none';
+    codeStrip.style.display=state.showCodeHints?'flex':'none';
     renderKeyboard();renderProgress()
   }
 
