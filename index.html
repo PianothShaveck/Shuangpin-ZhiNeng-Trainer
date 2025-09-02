@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shuangpin ZhiNeng Trainer</title>
+<style>
+  :root{
+    --bg1:#0f1226;--bg2:#11182e;--accent:#7e9cff;--accent2:#7ef3d4;--good:#4ddf88;--bad:#ff5a73;--text:#e9ecff;--muted:#aab0d3;--card:rgba(255,255,255,0.08);--card-strong:rgba(255,255,255,0.12);--shadow:0 10px 30px rgba(0,0,0,0.4);--initColor:#86f7b9;--finColor:#cfa8ff
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans","Apple Color Emoji","Segoe UI Emoji";color:var(--text);background:radial-gradient(1200px 800px at 10% 10%,#1a2340 0%,transparent 60%),radial-gradient(900px 700px at 100% 0%,#162b40 0%,transparent 70%),linear-gradient(135deg,var(--bg1),var(--bg2));overflow-x:hidden}
+  .gradient-orb{pointer-events:none;position:fixed;inset:-20vmax -20vmax auto auto;width:40vmax;height:40vmax;background:radial-gradient(circle at 50% 50%,rgba(126,243,212,0.45),rgba(126,156,255,0.2),transparent 70%);filter:blur(60px);mix-blend-mode:screen;animation:float 18s ease-in-out infinite alternate;opacity:.6}
+  @keyframes float{from{transform:translate3d(0,0,0) rotate(0)}to{transform:translate3d(-5vmax,5vmax,0) rotate(6deg)}}
+  .app{max-width:1100px;margin:36px auto 64px;padding:0 16px}
+  header.app-header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .title{display:flex;align-items:baseline;gap:12px}
+  .title h1{margin:0;font-size:clamp(22px,3.5vw,34px);letter-spacing:.2px;font-weight:800;background:linear-gradient(90deg,#fff,#cfd7ff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 20px rgba(126,156,255,0.25)}
+  .title small{color:var(--muted);font-weight:600;opacity:.9}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button,.chip{appearance:none;border:0;border-radius:12px;padding:10px 14px;background:var(--card);color:var(--text);font-weight:700;letter-spacing:.3px;backdrop-filter:blur(10px);box-shadow:var(--shadow);cursor:pointer;transition:transform .15s ease,background .2s ease,box-shadow .2s ease,color .2s ease}
+  button:hover{transform:translateY(-1px)}
+  button:active{transform:translateY(0)}
+  .btn-accent{background:linear-gradient(135deg,rgba(126,156,255,.5),rgba(126,243,212,.25));border:1px solid rgba(126,156,255,.35)}
+  .btn-danger{background:rgba(255,90,115,.18);border:1px solid rgba(255,90,115,.4)}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.12)}
+  label.chk{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
+  .pane{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px;box-shadow:var(--shadow);backdrop-filter:blur(12px)}
+  .layout{display:grid;grid-template-columns:1.2fr .9fr;gap:16px}
+  @media (max-width:960px){.layout{grid-template-columns:1fr}}
+  .trainer{display:grid;grid-template-rows:auto auto auto 1fr;gap:16px}
+  .target-card{position:relative;overflow:hidden}
+  .pinyin-main{font-size:clamp(28px,5.4vw,54px);font-weight:900;letter-spacing:1.5px;user-select:none}
+  .code-strip{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .code-key{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:12px;background:rgba(126,156,255,.18);border:1px solid rgba(126,156,255,.45);font-weight:900;color:#fff;box-shadow:var(--shadow)}
+  .code-key.expected{background:linear-gradient(135deg,rgba(126,243,212,.5),rgba(126,156,255,.3));border-color:rgba(126,243,212,.8);color:#0d112a;transform:translateY(-1px)}
+  .code-key.done{background:rgba(78,223,135,.25);border-color:rgba(78,223,135,.6);color:#dffff2}
+  .code-hints{color:var(--muted);font-size:13px}
+  .hint-init{color:var(--initColor);font-weight:800}
+  .hint-fin{color:var(--finColor);font-weight:800}
+  .hint{color:var(--muted);font-size:13px;margin-top:6px}
+  .progress-wrap{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+  .progress-bar{position:relative;width:100%;height:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:999px;overflow:hidden}
+  .progress-fill{position:absolute;inset:0 auto 0 0;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));box-shadow:inset 0 0 10px rgba(255,255,255,.35);transition:width .3s ease}
+  .panel-title{color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:12px;margin-bottom:8px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--card-strong);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px;text-align:center}
+  .stat .label{color:var(--muted);font-size:12px;letter-spacing:.6px;text-transform:uppercase}
+  .stat .value{font-size:24px;font-weight:800;margin-top:6px}
+  .keyboard{display:grid;gap:8px}
+  .kb-row{display:grid;gap:8px;grid-auto-flow:column;justify-content:start}
+  .kb-row:nth-child(2){padding-left:20px}
+  .kb-row:nth-child(3){padding-left:44px}
+  .keycap{width:58px;min-height:54px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#cdd4ff;box-shadow:var(--shadow);position:relative;user-select:none;transition:transform .1s ease,background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;display:flex;flex-direction:column;padding:6px}
+  .keycap .letter{font-weight:900;font-size:16px;line-height:1}
+  .keycap.enabled{background:rgba(126,156,255,.18);border-color:rgba(126,156,255,.5);color:#fff}
+  .keycap.expected{background:linear-gradient(135deg,rgba(126,243,212,.5),rgba(126,156,255,.3));border-color:rgba(126,243,212,.8);transform:translateY(-2px);color:#0d112a;text-shadow:0 1px 0 rgba(255,255,255,.25)}
+  .keycap.badflash{animation:badflash 250ms}
+  @keyframes badflash{from{box-shadow:0 0 0 0 rgba(255,90,115,.7)}to{box-shadow:0 0 26px 6px rgba(255,90,115,0)}}
+  .sp-labels{display:none;margin-top:4px}
+  .keyboard.show-codes .sp-labels{display:block}
+  .sp-line{font-size:10px;line-height:1.2;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sp-line .tag{padding:1px 4px;margin-right:3px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);font-weight:800}
+  .sp-line .t-init{color:var(--initColor);border-color:rgba(134,247,185,.45);background:rgba(134,247,185,.12)}
+  .sp-line .t-fin{color:var(--finColor);border-color:rgba(207,168,255,.45);background:rgba(207,168,255,.12)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:6px 10px;font-size:13px;color:#d9dfff;border:1px solid rgba(255,255,255,.14)}
+  .chip strong{font-weight:900;margin-right:4px;color:#fff}
+  .aside .pane+.pane{margin-top:12px}
+  .toast{position:fixed;right:16px;bottom:16px;background:rgba(20,25,45,.8);border:1px solid rgba(255,255,255,.14);padding:10px 12px;border-radius:12px;box-shadow:var(--shadow);font-weight:700;opacity:0;transform:translateY(8px);transition:.25s ease;z-index:50}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .shake{animation:shake 250ms ease}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+  .select-chip{display:flex;align-items:center;gap:8px}
+  .select-chip select{appearance:none;background:transparent;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#fff;padding:6px 8px}
+</style>
+</head>
+<body>
+<div class="gradient-orb" aria-hidden="true"></div>
+<div class="app">
+  <header class="app-header">
+    <div class="title">
+      <h1 id="title">Shuangpin ZhiNeng Trainer</h1>
+      <small id="tagline">Learn initial+final codes, one key at a time</small>
+    </div>
+    <div class="controls">
+      <button class="btn-accent" id="btnAddAuto">+ Add key</button>
+      <button id="btnChoose">Pick key…</button>
+      <div class="chip select-chip" id="filterWrap"><span id="filterLabel">Filter</span>: <select id="filterSelect"><option value="all">All combinations</option><option value="valid">Only valid/common syllables</option></select></div>
+      <button class="btn-ghost" id="btnResetSession">Mark all combos as due</button>
+      <button class="btn-danger" id="btnHardReset">Full reset</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="trainer pane" aria-live="polite">
+      <div class="target-card" id="targetCard">
+        <div class="pinyin-main" id="pinyinText">fan</div>
+        <div class="code-strip">
+          <span class="code-key expected" id="codeK1">f</span>
+          <span class="code-key" id="codeK2">j</span>
+          <span class="code-hints" id="codeHints">= <span class="hint-init" id="hintInit">f</span> + <span class="hint-fin" id="hintFin">an</span></span>
+        </div>
+        <div class="hint" id="hint">
+          Type the two-key code (initial + final). Backspace to fix the last key. The trainer uses SRS: due items first.
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar" aria-label="Due progress">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="chip" id="dueChip"><strong id="dueCount">0</strong>/<span id="poolCount">0</span> <span id="dueLabel">due</span></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label" id="lblTime">Time</div><div class="value" id="timeVal">0:00</div></div>
+        <div class="stat"><div class="label" id="lblSpeed">Speed</div><div class="value"><span id="wpmVal">0.0</span> <span id="cpm">CPM</span></div></div>
+        <div class="stat"><div class="label" id="lblAcc">Accuracy</div><div class="value" id="accVal">100%</div></div>
+        <div class="stat"><div class="label" id="lblKeys">Active keys</div><div class="value" id="keysVal">f j</div></div>
+      </div>
+
+      <div class="pane" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div class="chips" id="chips"></div>
+        <div class="chips">
+          <label class="chip chk"><input type="checkbox" id="toggleKeyLabels" style="accent-color:#7ef3d4;" checked /> <span id="chkShowLabels">Show Shuangpin labels</span></label>
+          <label class="chip chk"><input type="checkbox" id="toggleCodeHints" style="accent-color:#7ef3d4;" checked /> <span id="chkShowHints">Show code hints</span></label>
+          <label class="chip chk"><input type="checkbox" id="soundToggle" style="accent-color:#7ef3d4;" /> <span id="chkSound">Error sound</span></label>
+          <label class="chip chk"><input type="checkbox" id="skipUnknownToggle" style="accent-color:#7ef3d4;" checked /> <span id="chkSkipUnknown">Ignore non-active keys</span></label>
+        </div>
+      </div>
+    </section>
+
+    <aside class="aside">
+      <div class="pane">
+        <div class="panel-title" id="panelKeyboard">Keyboard (Shuangpin 智能ABC)</div>
+        <div class="keyboard" id="keyboard">
+          <div class="kb-row" data-row="1"></div>
+          <div class="kb-row" data-row="2"></div>
+          <div class="kb-row" data-row="3"></div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="panel-title" id="panelSuggest">Suggested next key</div>
+        <div class="chips" style="align-items:center;">
+          <div class="chip"><span id="suggestedLabel">Suggested</span>: <strong id="suggestVal">a</strong></div>
+          <button id="btnAddSuggest">Add suggested</button>
+        </div>
+        <div class="panel-title" style="margin-top:10px;" id="panelPicker">Key picker</div>
+        <div class="chips" id="keyPicker"></div>
+        <div class="panel-title" style="margin-top:10px;" id="panelNote">Note</div>
+        <div class="hint" id="noteText">
+          The trainer mechanically combines initial + final from the labels. Not all pairs are real Mandarin syllables; enable the filter to keep only valid/common ones.
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  const LOCALE = (function(){const l=(navigator.languages&&navigator.languages[0]||navigator.language||'en').toLowerCase();if(l.startsWith('it'))return'it';if(l.startsWith('zh'))return'zh';return'en'})();
+
+  const TR={
+    en:{title:"Shuangpin ZhiNeng Trainer",tagline:"Learn initial+final codes, one key at a time",btnAddAuto:"+ Add key",btnChoose:"Pick key…",btnResetSession:"Mark all combos as due",btnHardReset:"Full reset",hint:"Type the two-key code (initial + final). Backspace to fix the last key. The trainer uses SRS: due items first.",panelKeyboard:"Keyboard (Shuangpin 智能ABC)",panelSuggest:"Suggested next key",btnAddSuggest:"Add suggested",panelPicker:"Key picker",panelNote:"Note",noteText:"The trainer mechanically combines initial + final from the labels. Not all pairs are real Mandarin syllables; enable the filter to keep only valid/common ones.",statsTime:"Time",statsSpeed:"Speed",cpm:"CPM",statsAcc:"Accuracy",statsKeys:"Active keys",chkShowLabels:"Show Shuangpin labels",chkShowHints:"Show code hints",chkSound:"Error sound",chkSkipUnknown:"Ignore non-active keys",dueLabel:"due",filterLabel:"Filter",filterAll:"All combinations",filterValid:"Only valid/common syllables",suggested:"Suggested",toastAddKey:"Added key: {k}",toastAllDue:"All combinations set as due",toastReset:"Full reset done",toastAllKeys:"All keys are already enabled",chooseKeyHintToast:"Pick a key below in the Key picker.",iniTag:"ini",finTag:"fin"},
+    it:{title:"Shuangpin ZhiNeng Trainer",tagline:"Impara i codici iniziale+finale, un tasto alla volta",btnAddAuto:"+ Aggiungi tasto",btnChoose:"Scegli tasto…",btnResetSession:"Rendi tutte le combo da ripetere",btnHardReset:"Reset totale",hint:"Digita i due tasti del codice (iniziale + finale). Backspace per correggere l’ultimo tasto. L’allenamento usa SRS: ripete prima ciò che è scaduto.",panelKeyboard:"Tastiera (Shuangpin 智能ABC)",panelSuggest:"Suggerimento prossimo tasto",btnAddSuggest:"Aggiungi suggerito",panelPicker:"Selettore tasti",panelNote:"Nota",noteText:"L’allenatore combina meccanicamente iniziale + finale dalle etichette. Non tutte le combinazioni sono sillabe del mandarino; attiva il filtro per tenere solo quelle valide/comuni.",statsTime:"Tempo",statsSpeed:"Velocità",cpm:"CPM",statsAcc:"Precisione",statsKeys:"Tasti attivi",chkShowLabels:"Mostra etichette Shuangpin",chkShowHints:"Mostra aiuti codice",chkSound:"Suono errori",chkSkipUnknown:"Ignora tasti non attivi",dueLabel:"da ripetere",filterLabel:"Filtro",filterAll:"Tutte le combinazioni",filterValid:"Solo sillabe valide/comuni",suggested:"Suggerito",toastAddKey:"Aggiunto tasto: {k}",toastAllDue:"Tutte le combinazioni rese da ripetere",toastReset:"Reset completo",toastAllKeys:"Hai già attivato tutti i tasti",chooseKeyHintToast:"Scegli un tasto qui sotto, nel Selettore tasti.",iniTag:"ini",finTag:"fin"},
+    zh:{title:"双拼智能ABC训练器",tagline:"一步一步掌握声母+韵母按键",btnAddAuto:"+ 添加按键",btnChoose:"选择按键…",btnResetSession:"将全部组合标记为复习",btnHardReset:"清空重置",hint:"输入两个按键（声母+韵母）。按 Backspace 撤销上一步。使用间隔复习（SRS）：优先复习到期项目。",panelKeyboard:"键盘（双拼 智能ABC）",panelSuggest:"下一个推荐按键",btnAddSuggest:"添加推荐",panelPicker:"按键选择器",panelNote:"说明",noteText:"训练器按标签机械组合声母+韵母。并非所有组合都是标准普通话音节；可开启筛选仅保留有效/常见音节。",statsTime:"时间",statsSpeed:"速度",cpm:"CPM",statsAcc:"正确率",statsKeys:"已启用按键",chkShowLabels:"显示双拼标签",chkShowHints:"显示编码提示",chkSound:"错误提示音",chkSkipUnknown:"忽略未启用按键",dueLabel:"待复习",filterLabel:"筛选",filterAll:"全部组合",filterValid:"仅有效/常见音节",suggested:"推荐",toastAddKey:"已添加按键：{k}",toastAllDue:"已将全部组合标记为待复习",toastReset:"已完成重置",toastAllKeys:"所有按键都已启用",chooseKeyHintToast:"请在右侧“按键选择器”中选择一个按键。",iniTag:"声",finTag:"韵"}
+  };
+  const t=(k)=> (TR[LOCALE]&&TR[LOCALE][k]) || TR.en[k] || k;
+
+  const MAP={
+    q:{initials:['q'],finals:['ei']},
+    w:{initials:['w'],finals:['ian']},
+    e:{initials:['ch'],finals:['e']},
+    r:{initials:['r'],finals:['er','iu']},
+    t:{initials:['t'],finals:['iang','uang']},
+    y:{initials:['y'],finals:['ing']},
+    u:{initials:['u'],finals:[]},
+    i:{initials:['i'],finals:[]},
+    o:{initials:["'",'o'],finals:['uo'],zeroInitial:true},
+    p:{initials:['p'],finals:['uan']},
+    a:{initials:['zh'],finals:['a']},
+    s:{initials:['s'],finals:['ong','iong']},
+    d:{initials:['d'],finals:['ia','ua']},
+    f:{initials:['f'],finals:['en']},
+    g:{initials:['g'],finals:['eng']},
+    h:{initials:['h'],finals:['ang']},
+    j:{initials:['j'],finals:['an']},
+    k:{initials:['k'],finals:['ao']},
+    l:{initials:['l'],finals:['ai']},
+    z:{initials:['z'],finals:['iao']},
+    x:{initials:['x'],finals:['ie']},
+    c:{initials:['c'],finals:['in','uai']},
+    v:{initials:['sh'],finals:['ü']},
+    b:{initials:['b'],finals:['ou']},
+    n:{initials:['n'],finals:['un']},
+    m:{initials:['m'],finals:['ue','ui']}
+  };
+  const ALL_KEYS=Object.keys(MAP);
+  const ROWS=[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['z','x','c','v','b','n','m']];
+  const RECOMMENDED_ORDER=['f','j','a','k','d','l','s','g','h','r','e','u','i','w','o','t','y','p','q','b','n','m','c','v','x','z'];
+
+  const DEFAULT_STATE={activeKeys:['f','j'],stats:{typed:0,errors:0,startedAt:null},perKey:{},sound:false,skipUnknown:true,showKeyLabels:true,showCodeHints:true,srs:{},validOnly:false};
+  const STORAGE_KEY='sp-zn-trainer-v3';
+  let state=loadState();
+
+  const pinyinText=document.getElementById('pinyinText');
+  const codeK1=document.getElementById('codeK1');
+  const codeK2=document.getElementById('codeK2');
+  const hintInit=document.getElementById('hintInit');
+  const hintFin=document.getElementById('hintFin');
+  const codeHints=document.getElementById('codeHints');
+  const progressFill=document.getElementById('progressFill');
+  const dueCountEl=document.getElementById('dueCount');
+  const poolCountEl=document.getElementById('poolCount');
+  const timeVal=document.getElementById('timeVal');
+  const wpmVal=document.getElementById('wpmVal');
+  const accVal=document.getElementById('accVal');
+  const keysVal=document.getElementById('keysVal');
+  const chipsEl=document.getElementById('chips');
+  const keyboardEl=document.getElementById('keyboard');
+  const targetCard=document.getElementById('targetCard');
+  const btnAddAuto=document.getElementById('btnAddAuto');
+  const btnChoose=document.getElementById('btnChoose');
+  const btnAddSuggest=document.getElementById('btnAddSuggest');
+  const btnResetSession=document.getElementById('btnResetSession');
+  const btnHardReset=document.getElementById('btnHardReset');
+  const suggestVal=document.getElementById('suggestVal');
+  const keyPicker=document.getElementById('keyPicker');
+  const toggleKeyLabels=document.getElementById('toggleKeyLabels');
+  const toggleCodeHints=document.getElementById('toggleCodeHints');
+  const soundToggle=document.getElementById('soundToggle');
+  const skipUnknownToggle=document.getElementById('skipUnknownToggle');
+  const toast=document.getElementById('toast');
+  const filterLabel=document.getElementById('filterLabel');
+  const filterSelect=document.getElementById('filterSelect');
+  const dueLabel=document.getElementById('dueLabel');
+
+  document.getElementById('title').textContent=t('title');
+  document.getElementById('tagline').textContent=t('tagline');
+  btnAddAuto.textContent=t('btnAddAuto');
+  btnChoose.textContent=t('btnChoose');
+  btnResetSession.textContent=t('btnResetSession');
+  btnHardReset.textContent=t('btnHardReset');
+  document.getElementById('hint').textContent=t('hint');
+  document.getElementById('panelKeyboard').textContent=t('panelKeyboard');
+  document.getElementById('panelSuggest').textContent=t('panelSuggest');
+  document.getElementById('panelPicker').textContent=t('panelPicker');
+  document.getElementById('panelNote').textContent=t('panelNote');
+  document.getElementById('noteText').textContent=t('noteText');
+  document.getElementById('lblTime').textContent=t('statsTime');
+  document.getElementById('lblSpeed').textContent=t('statsSpeed');
+  document.getElementById('lblAcc').textContent=t('statsAcc');
+  document.getElementById('lblKeys').textContent=t('statsKeys');
+  document.getElementById('cpm').textContent=t('cpm');
+  document.getElementById('chkShowLabels').textContent=t('chkShowLabels');
+  document.getElementById('chkShowHints').textContent=t('chkShowHints');
+  document.getElementById('chkSound').textContent=t('chkSound');
+  document.getElementById('chkSkipUnknown').textContent=t('chkSkipUnknown');
+  document.getElementById('btnAddSuggest').textContent=t('btnAddSuggest');
+  document.getElementById('suggestedLabel').textContent=t('suggested');
+  filterLabel.textContent=t('filterLabel');
+  filterSelect.options[0].textContent=t('filterAll');
+  filterSelect.options[1].textContent=t('filterValid');
+  dueLabel.textContent=t('dueLabel');
+
+  const ROWS_CONTAINER=keyboardEl.querySelectorAll('.kb-row');
+  initKeyboard();
+  let itemPool=[];
+  let current=null;
+  let cursor=0;
+  let attemptErrors=0;
+  let audioCtx=null;
+
+  rebuildPool();
+  pickNextItem(true);
+  renderAll();
+  startTimerTick();
+
+  document.addEventListener('keydown',handleKeydown);
+  btnAddAuto.addEventListener('click',()=>{addSuggestedKey()});
+  btnAddSuggest.addEventListener('click',()=>{addSuggestedKey()});
+  btnChoose.addEventListener('click',()=>{flashToast(t('chooseKeyHintToast'),1400);highlightPickerOnce()});
+  btnResetSession.addEventListener('click',()=>{const now=Date.now();for(const it of itemPool){ensureSRS(it.id);state.srs[it.id].dueAt=now}saveState();renderProgress();flashToast(t('toastAllDue'),1400)});
+  btnHardReset.addEventListener('click',()=>{if(!confirm('OK?'))return;localStorage.removeItem(STORAGE_KEY);state=clone(DEFAULT_STATE);rebuildPool();pickNextItem(true);renderAll();flashToast(t('toastReset'),1600)});
+  toggleKeyLabels.checked=state.showKeyLabels;toggleKeyLabels.addEventListener('change',()=>{state.showKeyLabels=toggleKeyLabels.checked;saveState();renderKeyboard()});
+  toggleCodeHints.checked=state.showCodeHints;toggleCodeHints.addEventListener('change',()=>{state.showCodeHints=toggleCodeHints.checked;codeHints.style.display=state.showCodeHints?'':'none';saveState()});
+  soundToggle.checked=state.sound;soundToggle.addEventListener('change',()=>{state.sound=soundToggle.checked;saveState()});
+  skipUnknownToggle.checked=state.skipUnknown;skipUnknownToggle.addEventListener('change',()=>{state.skipUnknown=skipUnknownToggle.checked;saveState()});
+  filterSelect.value=state.validOnly?'valid':'all';
+  filterSelect.addEventListener('change',()=>{state.validOnly=(filterSelect.value==='valid');saveState();rebuildPool();pickNextItem(true);renderAll()});
+  buildKeyPicker();
+
+  function handleKeydown(e){
+    const key=normalizeKey(e);
+    if(key==='')return;
+    if(key==='backspace'){if(cursor>0){cursor=0;codeK1.classList.remove('done');codeK1.classList.add('expected');codeK2.classList.remove('expected','done')}e.preventDefault();return}
+    if(!state.stats.startedAt)state.stats.startedAt=Date.now();
+    if(!ALL_KEYS.includes(key)||!state.activeKeys.includes(key)){if(!state.skipUnknown){registerError(key);negativeFeedback(key)}return}
+    const expectedKey=cursor===0?current.initialKey:current.finalKey;
+    if(key===expectedKey){
+      registerTyped(key);
+      if(cursor===0){cursor=1;codeK1.classList.remove('expected');codeK1.classList.add('done');codeK2.classList.add('expected')}
+      else{codeK2.classList.remove('expected');codeK2.classList.add('done');scheduleCurrentItem();targetCard.classList.add('shake');setTimeout(()=>targetCard.classList.remove('shake'),200);pickNextItem()}
+      renderAll();saveState()
+    }else{attemptErrors++;registerError(key);negativeFeedback(key);saveState()}
+  }
+
+  function normalizeKey(e){
+    if(e.repeat)return'';const k=e.key;if(k==='Backspace')return'backspace';if(k.length!==1)return'';const lower=k.toLowerCase();const isLetter=lower>='a'&&lower<='z';return isLetter?lower:''
+  }
+
+  function rebuildPool(){
+    itemPool=[];
+    const act=state.activeKeys.slice();
+    for(const k1 of act){
+      const inits=(MAP[k1]&&MAP[k1].initials)||[];
+      for(const k2 of act){
+        const fins=(MAP[k2]&&MAP[k2].finals)||[];
+        for(const ic of inits){
+          for(const fc of fins){
+            const pinyin=composePinyin(k1,ic,fc);
+            const id=makeId(k1,ic,k2,fc);
+            if(!state.validOnly||isComboAllowed(ic,fc,pinyin)){
+              itemPool.push({id,initialKey:k1,finalKey:k2,initialCode:ic,finalCode:fc,pinyin})
+            }
+          }
+        }
+      }
+    }
+    renderProgress();buildKeyPicker()
+  }
+
+  function composePinyin(iKey,ic,fc){
+    let init=ic;if(ic==="'"||(iKey==='o'&&ic==='o'))init='';
+    const FIN_I=new Set(['ia','ie','iao','iu','ian','in','iang','ing','iong']);
+    const FIN_U=new Set(['ua','uai','uan','uang','uo','ui','un']);
+    const FIN_UU=new Set(['ü','ue','uan','un']);
+    if(iKey==='y'){
+      if(FIN_I.has(fc)){
+        if(fc==='ia')return'ya';if(fc==='ie')return'ye';if(fc==='iao')return'yao';if(fc==='iu')return'you';if(fc==='ian')return'yan';if(fc==='iang')return'yang';if(fc==='in')return'yin';if(fc==='ing')return'ying';if(fc==='iong')return'yong'
+      }
+      if(FIN_UU.has(fc)){
+        if(fc==='ü')return'yu';if(fc==='ue')return'yue';if(fc==='uan')return'yuan';if(fc==='un')return'yun'
+      }
+    }
+    if(iKey==='w'){
+      if(fc==='uo')return'wo';if(fc==='ui')return'wei';if(fc==='un')return'wen';
+      if(fc.startsWith('ua'))return'wa'+fc.slice(2);
+      if(fc==='uai')return'wai';if(fc==='uan')return'wan';if(fc==='uang')return'wang'
+    }
+    if((iKey==='b'||iKey==='p'||iKey==='m'||iKey==='f')&&fc==='uo'){
+      return iKey+'o'
+    }
+    if(init===''&&fc==='uo')return'o';
+    return init+fc
+  }
+
+  function isComboAllowed(ic,fc,py){
+    const ZERO=new Set(['a','ai','an','ang','ao','e','ei','en','eng','er','ou']);
+    const BASIC=new Set(['a','ai','an','ang','ao','e','ei','en','eng','er','ou','ong']);
+    const I_ALL=new Set(['ia','ie','iao','iu','ian','in','iang','ing','iong']);
+    const I_BPDMNL=new Set(['ian','iao','ie','in','ing','iu']);
+    const I_LN_EXTRA=new Set(['iang']);
+    const U_ALL=new Set(['ua','uai','uan','uang','uo','ui','un']);
+    const U_COMMON=new Set(['uo','ui','un','uan']);
+    const UU=new Set(['ü','ue','uan','un']);
+    const icN=(ic==="'"||ic==='o')?'∅':ic;
+    if(icN==='∅')return ZERO.has(fc);
+    if(icN==='w')return new Set(['ua','uai','uan','uang','uo','ui','un']).has(fc);
+    if(icN==='y')return I_ALL.has(fc)||UU.has(fc);
+    if(icN==='j'||icN==='q'||icN==='x')return I_ALL.has(fc)||fc==='ue'||fc==='uan'||fc==='un'||fc==='ü';
+    if(icN==='b')return BASIC.has(fc)||I_BPDMNL.has(fc)||fc==='uo';
+    if(icN==='p')return BASIC.has(fc)||new Set(['ian','iao','ie','in','ing']).has(fc)||fc==='uo';
+    if(icN==='m')return BASIC.has(fc)||I_BPDMNL.has(fc)||fc==='uo';
+    if(icN==='f')return BASIC.has(fc)||fc==='uo';
+    if(icN==='d')return BASIC.has(fc)||I_BPDMNL.has(fc)||new Set(['uo','ui','un','uan','ong']).has(fc);
+    if(icN==='t')return BASIC.has(fc)||new Set(['ian','iao','ie','in','ing','uo','ui','un','uan','ong']).has(fc);
+    if(icN==='n')return BASIC.has(fc)||I_BPDMNL.has(fc)||new Set(['uo','un','uan','ong']).has(fc)||new Set(['ü','ue']).has(fc);
+    if(icN==='l')return BASIC.has(fc)||I_BPDMNL.has(fc)||new Set(['uo','un','uan','ong']).has(fc)||new Set(['ü','ue']).has(fc)||I_LN_EXTRA.has(fc);
+    if(icN==='g'||icN==='k'||icN==='h')return BASIC.has(fc)||new Set(['ua','uai','uan','uang','uo','ui','un','ong']).has(fc);
+    if(icN==='zh'||icN==='ch'||icN==='sh')return BASIC.has(fc)||new Set(['ua','uai','uan','uang','uo','ui','un','ong']).has(fc);
+    if(icN==='r')return BASIC.has(fc)||new Set(['uo','ui','un','uan','ong']).has(fc);
+    if(icN==='z'||icN==='c'||icN==='s')return BASIC.has(fc)||new Set(['uo','ui','un','uan','ong']).has(fc);
+    return true
+  }
+
+  function makeId(k1,ic,k2,fc){return `${k1}_${ic.replace(/'/g,'_AP')}__${k2}_${fc}`}
+
+  function pickNextItem(first=false){
+    cursor=0;attemptErrors=0;
+    const now=Date.now();
+    const due=itemPool.filter(it=>{const s=ensureSRS(it.id);return s.reps===0||s.dueAt<=now});
+    const pool=due.length?due:itemPool;
+    if(!pool.length){current=null;pinyinText.textContent='—';codeK1.textContent='?';codeK2.textContent='?';hintInit.textContent='?';hintFin.textContent='?';renderProgress();return}
+    current=pool[Math.random()*pool.length|0];
+    pinyinText.textContent=current.pinyin||'—';
+    codeK1.textContent=current.initialKey;codeK2.textContent=current.finalKey;
+    codeK1.className='code-key expected';codeK2.className='code-key';
+    hintInit.textContent=displayInitial(current.initialKey,current.initialCode);
+    hintFin.textContent=current.finalCode;
+    codeHints.style.display=state.showCodeHints?'':'none';
+    renderKeyboard();renderProgress()
+  }
+
+  function displayInitial(key,ic){if(ic==="'"||(key==='o'&&ic==='o'))return '∅';return ic}
+
+  function ensureSRS(id){if(!state.srs[id])state.srs[id]={dueAt:0,interval:0,reps:0,lapses:0};return state.srs[id]}
+  function scheduleCurrentItem(){
+    if(!current)return;const now=Date.now();const rec=ensureSRS(current.id);const success=(attemptErrors===0);
+    if(success){rec.reps+=1;rec.interval=rec.interval===0?30000:Math.min((rec.interval*2)|0,1000*60*60*24*7);rec.dueAt=now+rec.interval}
+    else{rec.lapses+=1;rec.interval=10000;rec.dueAt=now+rec.interval}
+    saveState();pickNextItem()
+  }
+
+  function renderAll(){renderStats();renderKeyboard();renderChips();renderProgress();updateSuggestionUI()}
+
+  function renderProgress(){
+    const poolLen=itemPool.length;const now=Date.now();let due=0;
+    for(const it of itemPool){const s=ensureSRS(it.id);if(s.reps===0||s.dueAt<=now)due++}
+    dueCountEl.textContent=due;poolCountEl.textContent=poolLen;progressFill.style.width=poolLen?Math.round(due/poolLen*100)+'%':'0%'
+  }
+
+  function renderStats(){
+    keysVal.textContent=state.activeKeys.join(' ');
+    const acc=accuracy();accVal.textContent=(acc*100).toFixed(0)+'%';wpmVal.textContent=computeCPM().toFixed(1)
+  }
+
+  function renderChips(){
+    chipsEl.innerHTML='';for(const k of state.activeKeys){const st=state.perKey[k]||{typed:0,errors:0};const acc=perAcc(st);const div=document.createElement('div');div.className='chip';div.innerHTML=`<strong>${k}</strong> ${st.typed||0} ✓ / ${st.errors||0} ✗ (${acc}%)`;chipsEl.appendChild(div)}
+  }
+
+  function renderKeyboard(){
+    if(state.showKeyLabels)keyboardEl.classList.add('show-codes');else keyboardEl.classList.remove('show-codes');
+    const expected=cursor===0?(current&&current.initialKey):(current&&current.finalKey);
+    keyboardEl.querySelectorAll('.keycap').forEach(el=>{const k=el.dataset.key;el.classList.toggle('enabled',state.activeKeys.includes(k));el.classList.toggle('expected',k===expected)})
+  }
+
+  function initKeyboard(){
+    ROWS_CONTAINER.forEach(r=>r.innerHTML='');
+    ROWS.forEach((row,i)=>{const rEl=ROWS_CONTAINER[i];row.forEach(k=>{const cap=document.createElement('div');cap.className='keycap';cap.dataset.key=k;const letter=document.createElement('div');letter.className='letter';letter.textContent=k;const labels=document.createElement('div');labels.className='sp-labels';const mi=(MAP[k]?.initials||[]);const mf=(MAP[k]?.finals||[]);const l1=document.createElement('div');l1.className='sp-line';l1.innerHTML=`<span class="tag t-init">${t('iniTag')}</span>${mi.length?mi.join(' · '):'—'}`;const l2=document.createElement('div');l2.className='sp-line';l2.innerHTML=`<span class="tag t-fin">${t('finTag')}</span>${mf.length?mf.join(' · '):'—'}`;labels.appendChild(l1);labels.appendChild(l2);cap.appendChild(letter);cap.appendChild(labels);rEl.appendChild(cap)})})
+  }
+
+  function buildKeyPicker(){
+    keyPicker.innerHTML='';ALL_KEYS.forEach(k=>{const btn=document.createElement('button');btn.textContent=k;btn.className='btn-ghost';if(state.activeKeys.includes(k)){btn.style.opacity='.6';btn.style.filter='grayscale(.3)'}btn.addEventListener('click',()=>{if(!state.activeKeys.includes(k)){addKey(k);flashToast(t('toastAddKey').replace('{k}',k),1200)}});keyPicker.appendChild(btn)})
+  }
+
+  function addSuggestedKey(){
+    const s=suggestedNextKey();if(!s){flashToast(t('toastAllKeys'),1400);return}
+    addKey(s);flashToast(t('toastAddKey').replace('{k}',s),1200)
+  }
+
+  function suggestedNextKey(){for(const k of RECOMMENDED_ORDER){if(ALL_KEYS.includes(k)&&!state.activeKeys.includes(k))return k}for(const k of ALL_KEYS)if(!state.activeKeys.includes(k))return k;return null}
+
+  function addKey(k){
+    if(!ALL_KEYS.includes(k))return;if(state.activeKeys.includes(k))return;
+    state.activeKeys.push(k);saveState();rebuildPool();pickNextItem(true);renderAll()
+  }
+
+  function updateSuggestionUI(){const s=suggestedNextKey();suggestVal.textContent=s||'—'}
+
+  function startTimerTick(){
+    setInterval(()=>{if(!state.stats.startedAt){timeVal.textContent='0:00';return}const elapsed=Date.now()-state.stats.startedAt;const s=Math.floor(elapsed/1000);const m=Math.floor(s/60);const ss=String(s%60).padStart(2,'0');timeVal.textContent=`${m}:${ss}`;wpmVal.textContent=computeCPM().toFixed(1)},250)
+  }
+
+  function registerTyped(key){state.stats.typed++;const s=state.perKey[key]||{typed:0,errors:0};s.typed++;state.perKey[key]=s}
+  function registerError(key){state.stats.errors++;const s=state.perKey[key]||{typed:0,errors:0};s.errors++;state.perKey[key]=s;if(state.sound)beep()}
+  function perAcc(s){const t=(s.typed||0)+(s.errors||0);if(!t)return 100;return Math.max(0,Math.min(100,Math.round((s.typed/t)*100)))}
+  function accuracy(){const t=(state.stats.typed||0)+(state.stats.errors||0);if(!t)return 1;return state.stats.typed/t}
+  function computeCPM(){if(!state.stats.startedAt)return 0;const secs=(Date.now()-state.stats.startedAt)/1000;if(secs<=0)return 0;return (state.stats.typed/secs)*60}
+  function negativeFeedback(key){const cap=keyboardEl.querySelector(`.keycap[data-key="${key}"]`);if(cap){cap.classList.add('badflash');setTimeout(()=>cap.classList.remove('badflash'),240)}targetCard.classList.add('shake');setTimeout(()=>targetCard.classList.remove('shake'),220)}
+  function beep(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=audioCtx;const o=ctx.createOscillator();const g=ctx.createGain();o.type='square';o.frequency.value=180;g.gain.value=0.0001;o.connect(g);g.connect(ctx.destination);o.start();const now=ctx.currentTime;g.gain.exponentialRampToValueAtTime(0.2,now+0.01);o.frequency.exponentialRampToValueAtTime(120,now+0.08);g.gain.exponentialRampToValueAtTime(0.0001,now+0.12);o.stop(now+0.13)}catch(e){}}
+  function loadState(){try{const s=localStorage.getItem(STORAGE_KEY);if(!s)return clone(DEFAULT_STATE);const parsed=JSON.parse(s);return Object.assign(clone(DEFAULT_STATE),parsed)}catch(e){return clone(DEFAULT_STATE)}}
+  function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
+  function clone(o){return JSON.parse(JSON.stringify(o))}
+  function flashToast(msg,ms=1200){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),ms)}
+  function highlightPickerOnce(){keyPicker.classList.add('shake');setTimeout(()=>keyPicker.classList.remove('shake'),350)}
+})();
+</script>
+</body>
+</html>
